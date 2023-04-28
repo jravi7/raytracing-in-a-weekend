@@ -6,7 +6,7 @@
 
 namespace fs = std::filesystem; 
 
-int main()
+int main(int argc, char** argv)
 {
     int const imageWidth = 1024; 
     int const imageHeight = 768; 
