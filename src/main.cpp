@@ -13,26 +13,33 @@
 namespace fs = std::filesystem; 
 using namespace math; 
 
-bool hitSphere(point3 const& center, double radius, Ray const& r)
+double hitSphere(point3 const& center, double radius, Ray const& r)
 {
     //coeefficients of t 
     double a = dot(r.dir, r.dir); 
     double b = 2 * (dot(r.orig, r.dir) - dot(r.dir, center)); 
     double c = -2 * dot(r.orig, center) + dot(r.orig, r.orig) + dot(center, center) - radius * radius; 
     auto discriminant = b * b - 4 * a * c; 
-    return discriminant > 0; 
+    if (discriminant > 0.0){
+        return (-b-sqrt(discriminant)) / 2 * a; 
+    } else {
+        return -1.0; 
+    }
 }
 
 color RayColor(Ray const& ray)
 {
     point3 const& spherePosition = point3(0,0,-1); 
     double const sphereRadius = 0.5; 
-    if (hitSphere(spherePosition, sphereRadius, ray)){
-        return color(1, 0, 0); 
+    double t = hitSphere(spherePosition, sphereRadius, ray);
+    if (t > 0.0){
+        vec3 n = math::unit_vector(ray.At(t) - spherePosition);
+        color c = 0.5*(color(n.x()+1, n.y()+1, n.z()+1)); 
+        return c; 
     }
     //return background color
     vec3 dirNormalized = math::unit_vector(ray.Direction()); 
-    double t = 0.5*(dirNormalized.y() + 1.0); 
+    t = 0.5*(dirNormalized.y() + 1.0); 
     return (1.0 - t) * color(1.0, 1.0, 1.0) + t * color(0.5, 0.7, 1.0); 
 }
 
@@ -46,7 +53,7 @@ int main(int argc, char** argv)
 
     //image properties
     float const aspectRatio = 16/9; 
-    int const imageHeight = 1080; 
+    int const imageHeight = 400; 
     int const imageWidth = static_cast<int>(imageHeight * aspectRatio); 
 
     //camera properties
