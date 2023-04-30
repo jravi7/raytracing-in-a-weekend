@@ -4,7 +4,7 @@
 #include <iostream>
 
 using std::sqrt;
-
+namespace math{
 class vec3 {
     public:
         vec3() : e{0,0,0} {}
@@ -96,4 +96,5 @@ inline vec3 cross(const vec3 &u, const vec3 &v) {
 
 inline vec3 unit_vector(vec3 v) {
     return v / v.length();
+}
 }
