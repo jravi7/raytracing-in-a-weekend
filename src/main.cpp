@@ -9,6 +9,9 @@
 #include "color.h"
 #include "ray.h"
 
+#define castInt(x) static_cast<int>(x)
+#define castFloat(x) static_cast<float>(x)
+#define castDouble(x) static_cast<double>(x)
 
 namespace fs = std::filesystem; 
 using namespace math; 
@@ -16,12 +19,13 @@ using namespace math;
 double hitSphere(point3 const& center, double radius, Ray const& r)
 {
     //coeefficients of t 
-    double a = dot(r.dir, r.dir); 
-    double b = 2 * (dot(r.orig, r.dir) - dot(r.dir, center)); 
-    double c = -2 * dot(r.orig, center) + dot(r.orig, r.orig) + dot(center, center) - radius * radius; 
-    auto discriminant = b * b - 4 * a * c; 
+    vec3 oc = r.orig - center; 
+    double a = r.dir.length_squared(); 
+    double half_b = dot(oc, r.dir); 
+    double c = -2 * oc.length_squared() + dot(r.orig, r.orig) + dot(center, center) - radius * radius; 
+    auto discriminant = half_b * half_b -  a * c; 
     if (discriminant > 0.0){
-        return (-b-sqrt(discriminant)) / 2 * a; 
+        return (-half_b-sqrt(discriminant)) / a; 
     } else {
         return -1.0; 
     }
@@ -29,20 +33,19 @@ double hitSphere(point3 const& center, double radius, Ray const& r)
 
 color RayColor(Ray const& ray)
 {
-    point3 const& spherePosition = point3(0,0,-1); 
-    double const sphereRadius = 0.5; 
-    double t = hitSphere(spherePosition, sphereRadius, ray);
-    if (t > 0.0){
-        vec3 n = math::unit_vector(ray.At(t) - spherePosition);
-        color c = 0.5*(color(n.x()+1, n.y()+1, n.z()+1)); 
-        return c; 
-    }
+    // point3 const& spherePosition = point3(0,0,-1); 
+    // double const sphereRadius = 0.5; 
+    // double t = hitSphere(spherePosition, sphereRadius, ray);
+    // if (t > 0.0){
+    //     vec3 n = math::unit_vector(ray.At(t) - spherePosition);
+    //     color c = 0.5*(color(n.x()+1, n.y()+1, n.z()+1)); 
+    //     return c; 
+    // }    
     //return background color
     vec3 dirNormalized = math::unit_vector(ray.Direction()); 
-    t = 0.5*(dirNormalized.y() + 1.0); 
+    auto t = 0.5*(dirNormalized.y() + 1.0); 
     return (1.0 - t) * color(1.0, 1.0, 1.0) + t * color(0.5, 0.7, 1.0); 
 }
-
 
 int main(int argc, char** argv)
 {
@@ -52,33 +55,46 @@ int main(int argc, char** argv)
     }
 
     //image properties
-    float const aspectRatio = 16/9; 
-    int const imageHeight = 400; 
-    int const imageWidth = static_cast<int>(imageHeight * aspectRatio); 
+    float const aspectRatio = 16.0/9.0;
+    int const imageWidth = 400; 
+    int const imageHeight = castInt(imageWidth / aspectRatio); 
+    std::cout<<"Image Size:"<<imageWidth<<"x"<<imageHeight<<std::endl; 
 
     //camera properties
     double viewportHeight = 2.0; 
-    double viewportWidth = viewportHeight * aspectRatio;
+    double viewportWidth = viewportHeight * (castFloat(imageWidth)/imageHeight);
+    std::cout<<"Viewport Size:"<<viewportWidth<<"x"<<viewportHeight<<std::endl; 
     float focalLength = 1.0; 
 
-    auto origin = point3();
-    auto horizontal = vec3(viewportWidth, 0, 0); 
-    auto vertical = vec3(0, viewportHeight, 0); 
-    auto lowerLeft = origin - horizontal/2 - vertical/2 - vec3(0,0,focalLength);
+    auto cameraOrigin = point3();
+    // viewport vectors
+    auto viewportU = vec3(viewportWidth, 0, 0); 
+    auto viewportV = vec3(0, viewportHeight, 0); 
+    auto viewportW = vec3(0, 0, focalLength); 
+    // pixel spacing
+    auto du = viewportU / castFloat(imageWidth);
+    auto dv = viewportV / castFloat(imageHeight);
+    
+    // starting 
+    auto viewportTopLeft = cameraOrigin - viewportU/2 + viewportV/2 - viewportW; 
+    auto pixel00 = viewportTopLeft + 0.5f * (du + dv); 
     
 
     fs::path output_path = fs::current_path() / "output.ppm";
     std::ofstream imageFileObject (output_path, std::ios_base::out);
-
+    // ppm header
+    // P3
+    // w h
+    // 255
     imageFileObject<<"P3\n" <<imageWidth<< ' ' <<imageHeight<<"\n255\n";
 
-    for (int h = imageHeight - 1; h >=0; --h){
+    for (int h = 0 ; h < imageHeight; ++h){
         for(int w = 0; w < imageWidth; ++w){
             auto u = double (w) / (imageWidth - 1);
             auto v = double (h) / (imageHeight - 1);
-            vec3 endpoint = lowerLeft + u*horizontal + v * vertical; 
-            vec3 direction = endpoint - origin; 
-            Ray r(origin, direction); 
+            vec3 currentPoint = pixel00 + du * w + dv * v; 
+            vec3 direction = currentPoint - cameraOrigin;
+            Ray r(cameraOrigin, direction); 
             color pixelColor = RayColor(r); 
             WriteColor(imageFileObject, pixelColor); 
         } 
