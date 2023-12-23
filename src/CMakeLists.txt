@@ -8,6 +8,7 @@ set(SOURCES main.cpp
             hittable.h
             hittable-list.h
             common.h
+            interval.h
     )
 
 add_executable(raytracer ${SOURCES})

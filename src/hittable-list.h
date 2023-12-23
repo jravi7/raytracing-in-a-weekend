@@ -25,14 +25,14 @@ public:
         mHittableObjects.clear(); 
     }
 
-    bool Hit(Ray const& r, double tmin, double tmax, HitRecord& record) const override
+    bool Hit(Ray const& r, Interval const& rayT, HitRecord& record) const override
     {
         bool hitAnything = false; 
-        double closestT = tmax; 
+        double closestT = rayT.Max(); 
         HitRecord tempRecord; 
 
         for(std::shared_ptr<Hittable> const& h: mHittableObjects){
-            if (h->Hit(r, tmin, tmax, tempRecord)){
+            if (h->Hit(r, rayT, tempRecord)){
                 hitAnything = true; 
                 closestT = tempRecord.t; 
                 record = tempRecord; 

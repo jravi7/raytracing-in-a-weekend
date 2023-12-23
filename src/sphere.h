@@ -11,7 +11,7 @@ public:
 
     }
 
-    bool Hit(Ray const& r, double tmin, double tmax, HitRecord& record) const override
+    bool Hit(Ray const& r, Interval const& rayInterval, HitRecord& record) const override
     {
         //coeefficients of t 
         math::vec3 oc = r.orig - mCenter; 
@@ -25,9 +25,9 @@ public:
             return false; 
         } 
         double root = (-half_b-sqrtD) / a;
-        if(root <= tmin || root >= tmax){
+        if(!rayInterval.Surrounds(root)){
             root = (-half_b+sqrtD) / a;
-            if (root <= tmin || root >= tmax){
+            if (!rayInterval.Surrounds(root)){
                 return false; 
             }
         }

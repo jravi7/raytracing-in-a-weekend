@@ -20,7 +20,7 @@ using namespace math;
 color RayColor(Ray const& ray, Hittable const& world)
 {
     HitRecord record; 
-    if (world.Hit(ray, 0, infinity, record)){
+    if (world.Hit(ray, Interval(0, Interval::infinity), record)){
         color c = 0.5*(color(1.0f, 1.0f, 1.0f) + record.normal); 
         return c; 
     }    

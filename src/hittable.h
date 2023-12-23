@@ -1,4 +1,5 @@
 # pragma once
+#include "interval.h"
 #include "vec3.h"
 #include "ray.h"
 
@@ -21,5 +22,5 @@ class Hittable
 {
 public: 
     virtual ~Hittable() = default; 
-    virtual bool Hit(Ray const& r, double tmin, double tmax, HitRecord& record) const = 0; 
+    virtual bool Hit(Ray const& r, Interval const& rayInterval, HitRecord& record) const = 0; 
 };
