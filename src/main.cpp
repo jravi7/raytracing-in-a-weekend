@@ -4,10 +4,11 @@
 #include <filesystem>
 
 
-#include "vec3.h"
-#include "ray.h"
+#include "common.h"
 #include "color.h"
-#include "ray.h"
+#include "sphere.h"
+#include "hittable-list.h"
+
 
 #define castInt(x) static_cast<int>(x)
 #define castFloat(x) static_cast<float>(x)
@@ -16,35 +17,16 @@
 namespace fs = std::filesystem; 
 using namespace math; 
 
-double hitSphere(point3 const& center, double radius, Ray const& r)
+color RayColor(Ray const& ray, Hittable const& world)
 {
-    //coeefficients of t 
-    vec3 oc = r.orig - center; 
-    double a = r.dir.length_squared(); 
-    double half_b = dot(oc, r.dir); 
-    double c = dot(oc, oc) - radius * radius; 
-    auto discriminant = half_b * half_b - a * c; 
-
-    if (discriminant < 0.0) {
-        return -1.0; 
-    } else {
-        return (-half_b-sqrt(discriminant)) / a; 
-    }
-}
-
-color RayColor(Ray const& ray)
-{
-    point3 const& spherePosition = point3(0,0,-1); 
-    double const sphereRadius = 0.5; 
-    double t = hitSphere(spherePosition, sphereRadius, ray);
-    if (t > 0.0){
-        vec3 n = math::unit_vector(ray.At(t) - spherePosition);
-        color c = 0.5*(color(n.x()+1, n.y()+1, n.z()+1)); 
+    HitRecord record; 
+    if (world.Hit(ray, 0, infinity, record)){
+        color c = 0.5*(color(1.0f, 1.0f, 1.0f) + record.normal); 
         return c; 
     }    
     //return background color
     vec3 dirNormalized = math::unit_vector(ray.Direction()); 
-    t = 0.5*(dirNormalized.y() + 1.0); 
+    double t = 0.5*(dirNormalized.y() + 1.0); 
     return (1.0 - t) * color(1.0, 1.0, 1.0) + t * color(0.5, 0.7, 1.0); 
 }
 
@@ -62,23 +44,28 @@ int main(int argc, char** argv)
     std::cout<<"Image Size:"<<imageWidth<<"x"<<imageHeight<<std::endl; 
 
     //camera properties
+    point3 cameraOrigin = point3();
     double viewportHeight = 2.0; 
     double viewportWidth = viewportHeight * (castFloat(imageWidth)/imageHeight);
     std::cout<<"Viewport Size:"<<viewportWidth<<"x"<<viewportHeight<<std::endl; 
     float focalLength = 1.0; 
 
-    auto cameraOrigin = point3();
     // viewport vectors
-    auto viewportU = vec3(viewportWidth, 0, 0); 
-    auto viewportV = vec3(0, -viewportHeight, 0); 
-    auto viewportW = vec3(0, 0, focalLength); 
+    vec3 viewportU = vec3(viewportWidth, 0, 0); 
+    vec3 viewportV = vec3(0, -viewportHeight, 0); 
+    vec3 viewportW = vec3(0, 0, focalLength); 
     // pixel spacing
-    auto du = viewportU / imageWidth;
-    auto dv = viewportV / imageHeight;
-    
-    // starting 
+    vec3 du = viewportU / imageWidth;
+    vec3 dv = viewportV / imageHeight;
+    // starting point 
     auto viewportTopLeft = cameraOrigin - viewportU/2 - viewportV/2 - viewportW; 
     auto pixel00 = viewportTopLeft + 0.5f * (du + dv); 
+
+    // World - Sekai - Ulagam
+    HittableList world; 
+    world.Add(std::make_shared<Sphere>(100, point3(0, -100.5, -1)));
+    world.Add(std::make_shared<Sphere>(0.5, point3(0, 0, -1)));
+    
     
 
     fs::path output_path = fs::current_path() / "output.ppm";
@@ -94,7 +81,7 @@ int main(int argc, char** argv)
             vec3 currentPoint = pixel00 + du * w + dv * h; 
             vec3 direction = currentPoint - cameraOrigin;
             Ray r(cameraOrigin, direction); 
-            color pixelColor = RayColor(r); 
+            color pixelColor = RayColor(r, world); 
             WriteColor(imageFileObject, pixelColor); 
         } 
     }
