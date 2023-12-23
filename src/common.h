@@ -15,5 +15,15 @@ inline double DegreesToRadians(double degree)
     return degree * pi / 180.0; 
 }
 
+inline double RandomDouble()
+{
+    return rand() / (RAND_MAX + 1.0); 
+}
+
+inline double RandomDouble(double min, double max)
+{
+    return min + (max-min) * RandomDouble(); 
+}
+
 Interval const universe(-Interval::infinity, Interval::infinity);
 Interval const empty(Interval::infinity, -Interval::infinity);

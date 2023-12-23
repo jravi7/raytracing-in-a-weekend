@@ -12,14 +12,14 @@ public:
     Camera() = default; 
     void Initialize()
     {
-        mImageHeight = castInt(mImageWidth / mAspectRatio); 
-        std::cout<<"Image Size:"<<mImageWidth<<"x"<<mImageHeight<<std::endl; 
+        ImageHeight = castInt(ImageWidth / AspectRatio); 
+        std::cout<<"Image Size:"<<ImageWidth<<"x"<<ImageHeight<<std::endl; 
 
         // camera properties
         mOrigin = math::point3();
         double viewportHeight = 2.0; 
         float focalLength = 1.0; 
-        double viewportWidth = viewportHeight * (castFloat(mImageWidth)/mImageHeight);
+        double viewportWidth = viewportHeight * (castFloat(ImageWidth)/ImageHeight);
         std::cout<<"Viewport Size:"<<viewportWidth<<"x"<<viewportHeight<<std::endl; 
         
         // viewport vectors
@@ -28,8 +28,11 @@ public:
         mViewportW = math::vec3(0, 0, focalLength); 
         
         // pixel spacing
-        mPixelDeltaU = mViewportU / mImageWidth;
-        mPixelDeltaV = mViewportV / mImageHeight;
+        mPixelDeltaU = mViewportU / ImageWidth;
+        mPixelDeltaV = mViewportV / ImageHeight;
+        // starting point 
+        auto viewportTopLeft = mOrigin - mViewportU/2 - mViewportV/2 - mViewportW; 
+        mPixel00 = viewportTopLeft + 0.5f * (mPixelDeltaU + mPixelDeltaV); 
     }
     void Render(Hittable const& world)
     {
@@ -39,23 +42,40 @@ public:
         // P3
         // w h
         // 255
-        imageFileObject<<"P3\n" <<mImageWidth<< ' ' <<mImageHeight<<"\n255\n";
+        imageFileObject<<"P3\n" <<ImageWidth<< ' ' <<ImageHeight<<"\n255\n";
         
-        // starting point 
-        auto viewportTopLeft = mOrigin - mViewportU/2 - mViewportV/2 - mViewportW; 
-        auto pixel00 = viewportTopLeft + 0.5f * (mPixelDeltaU + mPixelDeltaV); 
-        for (int h = 0 ; h < mImageHeight; ++h){
-            for(int w = 0; w < mImageWidth; ++w){
-                math::vec3 currentPoint = pixel00 + mPixelDeltaU * w + mPixelDeltaV * h; 
-                math::vec3 direction = currentPoint - mOrigin;
-                Ray r(mOrigin, direction); 
-                math::color pixelColor = RayColor(r, world); 
-                WriteColor(imageFileObject, pixelColor); 
+        for (int h = 0 ; h < ImageHeight; ++h){
+            for(int w = 0; w < ImageWidth; ++w){
+                math::color pixelColor = math::point3();
+                for(int sample = 0; sample < SamplesPerPixels; sample++){
+                    Ray r = GetRay(w, h);
+                    pixelColor += RayColor(r, world);     
+                }
+                WriteColor(imageFileObject, pixelColor, SamplesPerPixels); 
             } 
         }
         imageFileObject.close(); 
     }
 
+
+    double AspectRatio; 
+    int ImageWidth; 
+    int ImageHeight; 
+    int SamplesPerPixels; 
+private: 
+    Ray GetRay(int ii, int jj) const
+    {   
+        math::point3 pixelCenter = mPixel00 + ii * mPixelDeltaU + jj * mPixelDeltaV;
+        math::point3 pixelSample = pixelCenter + PixelSampleSquare(); 
+        math::vec3 direction = pixelSample - mOrigin;
+        return Ray(mOrigin, direction); 
+    }
+    math::point3 PixelSampleSquare() const
+    {
+        double px = -0.5 + RandomDouble(); 
+        double py = -0.5 + RandomDouble(); 
+        return px * mPixelDeltaU + py * mPixelDeltaV;
+    }
     math::color RayColor(Ray const& ray, Hittable const& world)
     {
         HitRecord record; 
@@ -69,11 +89,7 @@ public:
         return (1.0 - t) * math::color(1.0, 1.0, 1.0) + t * math::color(0.5, 0.7, 1.0); 
     }
 
-
-    double mAspectRatio; 
-    int mImageWidth; 
-private: 
-    int mImageHeight; 
+    math::point3 mPixel00; 
     math::point3 mOrigin;
     math::vec3 mViewportU ; 
     math::vec3 mViewportV ;

@@ -30,6 +30,16 @@ public:
         return mMax;
     }
 
+    double clamp(double x) const {
+        if (x < mMin){
+            return mMin; 
+        } 
+        if (x > mMax){
+            return mMax; 
+        }
+        return x; 
+    }
+
 private: 
     double mMin; 
     double mMax; 
