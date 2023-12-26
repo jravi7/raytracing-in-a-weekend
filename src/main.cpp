@@ -21,6 +21,7 @@ int main(int argc, char** argv)
     camera.AspectRatio = 16.0/9.0; 
     camera.ImageWidth = 700; 
     camera.SamplesPerPixels = 100; 
+    camera.MaxDepth = 50; 
     camera.Initialize(); 
 
     // World - Sekai - Ulagam

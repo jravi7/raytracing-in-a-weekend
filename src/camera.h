@@ -49,7 +49,7 @@ public:
                 math::color pixelColor = math::point3();
                 for(int sample = 0; sample < SamplesPerPixels; sample++){
                     Ray r = GetRay(w, h);
-                    pixelColor += RayColor(r, world);     
+                    pixelColor += RayColor(r, world, MaxDepth);     
                 }
                 WriteColor(imageFileObject, pixelColor, SamplesPerPixels); 
             } 
@@ -62,6 +62,7 @@ public:
     int ImageWidth; 
     int ImageHeight; 
     int SamplesPerPixels; 
+    int MaxDepth; 
 private: 
     Ray GetRay(int ii, int jj) const
     {   
@@ -76,11 +77,15 @@ private:
         double py = -0.5 + RandomDouble(); 
         return px * mPixelDeltaU + py * mPixelDeltaV;
     }
-    math::color RayColor(Ray const& ray, Hittable const& world)
-    {
+    math::color RayColor(Ray const& ray, Hittable const& world, int depth)
+    {   
+        if (depth <= 0){
+            return math::color(0,0,0); 
+        }
         HitRecord record; 
-        if (world.Hit(ray, Interval(0, Interval::infinity), record)){
-            math::color c = 0.5*(math::color(1.0f, 1.0f, 1.0f) + record.normal); 
+        if (world.Hit(ray, Interval(0.001, Interval::infinity), record)){ //0.001 is to avoid Shadow Acne
+            math::vec3 direction = RandomOnHemisphere(record.normal);
+            math::color c = 0.5 * RayColor(Ray(record.point, direction), world, depth-1); 
             return c; 
         }    
         //return background color
