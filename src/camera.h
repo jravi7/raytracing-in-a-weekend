@@ -84,8 +84,9 @@ private:
         }
         HitRecord record; 
         if (world.Hit(ray, Interval(0.001, Interval::infinity), record)){ //0.001 is to avoid Shadow Acne
-            math::vec3 direction = RandomOnHemisphere(record.normal);
-            math::color c = 0.5 * RayColor(Ray(record.point, direction), world, depth-1); 
+            math::vec3 direction = record.normal + RandomUnitVector(); 
+            //math::vec3 direction = RandomOnHemisphere(record.normal);
+            math::color c = 0.1 * RayColor(Ray(record.point, direction), world, depth-1); 
             return c; 
         }    
         //return background color
