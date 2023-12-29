@@ -10,6 +10,7 @@ set(SOURCES main.cpp
             common.h
             interval.h
             camera.h
+            material.h
     )
 
 add_executable(raytracer ${SOURCES})

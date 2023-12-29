@@ -5,8 +5,8 @@
 class Sphere: public Hittable
 {
 public: 
-    Sphere(float radius, math::point3 center): 
-        mRadius(radius), mCenter(center)
+    Sphere(float radius, math::point3 center, std::shared_ptr<Material> material): 
+        mRadius(radius), mCenter(center), mMaterial(material)
     {
 
     }
@@ -34,10 +34,12 @@ public:
         record.t = root; 
         record.point = r.At(root); 
         record.SetFaceNormal(r,(record.point - mCenter) / mRadius); 
+        record.material = mMaterial;
         return true; 
     }
 
 private: 
     float mRadius;   
     math::point3 mCenter; 
+    std::shared_ptr<Material> mMaterial; 
 };
