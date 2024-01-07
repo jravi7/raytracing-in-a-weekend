@@ -24,10 +24,11 @@ int main(int argc, char** argv)
     // World - Sekai - Ulagam
     HittableList world; 
     world.Add(std::make_shared<Sphere>(100, point3( 0, -100.5, -1.0), materialGround));
+    world.Add(std::make_shared<Sphere>(0.5, point3( 0, 0, -1.0), materialCenter));
     world.Add(std::make_shared<Sphere>(0.5, point3(-1.0, 0, -1.0), materialLeft));
     world.Add(std::make_shared<Sphere>(-0.4, point3(-1.0, 0, -1.0), materialLeft));
     world.Add(std::make_shared<Sphere>(0.5, point3( 1.0, 0, -1.0), materialRight));
-    world.Add(std::make_shared<Sphere>(0.5, point3( 0, 0, -1.0), materialCenter));
+    
     
     
     // image properties
